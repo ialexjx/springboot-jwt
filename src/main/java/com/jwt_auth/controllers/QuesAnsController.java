@@ -2,6 +2,7 @@ package com.jwt_auth.controllers;
 
 import com.jwt_auth.models.responses.ApiResponse;
 import com.jwt_auth.models.tables.QuestionsAnswers;
+import com.jwt_auth.services.QuestionAnswerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
