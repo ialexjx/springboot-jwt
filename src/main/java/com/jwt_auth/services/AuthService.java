@@ -4,6 +4,7 @@ package com.jwt_auth.services;
 
 import com.jwt_auth.models.requests.LoginRequest;
 import com.jwt_auth.models.requests.SignupRequest;
+import com.jwt_auth.models.responses.ApiResponse;
 import com.jwt_auth.models.responses.AuthResponse;
 import com.jwt_auth.models.tables.UserTokens;
 import com.jwt_auth.models.tables.Users;
@@ -26,7 +27,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JWTService jwtService;
 
-    public AuthResponse signup(SignupRequest request) {
+    public ApiResponse<Users> signup(SignupRequest request) {
         // Check if username or email already exists
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -47,18 +48,7 @@ public class AuthService {
 
         userRepository.save(user);
 
-        // Generate token
-        String token = jwtService.generateToken(user.getUsername());
-
-        // Save token
-        UserTokens userToken = new UserTokens();
-        userToken.setUsers(user);
-        userToken.setToken(token);
-        userToken.setCreatedAt(LocalDateTime.now());
-        userToken.setExpiresAt(LocalDateTime.now().plusDays(1));
-        userTokenRepository.save(userToken);
-
-        return new AuthResponse(token, user.getUsername());
+        return new ApiResponse<>(200, user, "Registration SuccessFul for the user");
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -66,7 +56,7 @@ public class AuthService {
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new BadCredentialsException("Invalid credentials");
+            throw new BadCredentialsException("Incorrect Password");
         }
 
         String token = jwtService.generateToken(user.getUsername());

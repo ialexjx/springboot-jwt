@@ -1,5 +1,6 @@
 package com.jwt_auth.models.tables;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jwt_auth.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -23,9 +24,14 @@ public class Users {
     private String password;
     private String firstName;
     private String lastName;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
     private Boolean isActive = true;
+
+    @JsonIgnore
+    private LocalDateTime createdAt;
+
+    @JsonIgnore
+    private LocalDateTime updatedAt;
+
 }
