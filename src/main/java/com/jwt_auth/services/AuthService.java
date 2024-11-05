@@ -1,7 +1,5 @@
 package com.jwt_auth.services;
 
-
-
 import com.jwt_auth.models.requests.LoginRequest;
 import com.jwt_auth.models.requests.SignupRequest;
 import com.jwt_auth.models.responses.ApiResponse;
@@ -11,7 +9,6 @@ import com.jwt_auth.models.tables.Users;
 import com.jwt_auth.repositories.UserTokensRepository;
 import com.jwt_auth.repositories.UsersRepository;
 import org.springframework.stereotype.Service;
-
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
