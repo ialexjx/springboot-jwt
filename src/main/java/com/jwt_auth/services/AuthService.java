@@ -56,7 +56,7 @@ public class AuthService {
             throw new BadCredentialsException("Incorrect Password");
         }
 
-        String token = jwtService.generateToken(user.getUsername());
+        String token = jwtService.generateToken(user);
 
         UserTokens userToken = new UserTokens();
         userToken.setUsers(user);
