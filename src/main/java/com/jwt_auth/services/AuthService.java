@@ -28,13 +28,13 @@ public class AuthService {
     public ApiResponse<?> signup(SignupRequest request) throws Exception {
         // Check if username or email already exists
         if (userRepository.existsByUsername(request.getUsername())) {
-            ApiResponse response = new ApiResponse();
+            ApiResponse<?> response = new ApiResponse<>();
             response.setCode(400);
             response.setMessage("This username is already occupied");
             return response;
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            ApiResponse response = new ApiResponse();
+            ApiResponse<?> response = new ApiResponse<>();
             response.setCode(400);
             response.setMessage("This email is already present");
             return response;

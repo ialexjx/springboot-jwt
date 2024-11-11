@@ -1,5 +1,6 @@
 package com.jwt_auth.services;
 
+import com.jwt_auth.exceptions.InvalidTokenException;
 import com.jwt_auth.models.tables.UserTokens;
 import com.jwt_auth.repositories.UserTokensRepository;
 import io.jsonwebtoken.Claims;
@@ -105,5 +106,14 @@ public class JWTService {
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public void validateToken(String token, UserDetails userDetails) throws InvalidTokenException {
+        final String username = extractUsername(token);
+        Optional<UserTokens> userToken = userTokensRepository.findByToken(token);
+
+        if (!username.equals(userDetails.getUsername()) || isTokenExpired(token) || userToken.isEmpty() || userToken.get().getIsRevoked()) {
+            throw new InvalidTokenException("Invalid or expired token.");
+        }
     }
 }

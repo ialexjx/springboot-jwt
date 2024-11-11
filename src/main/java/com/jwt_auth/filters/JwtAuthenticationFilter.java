@@ -1,5 +1,6 @@
 package com.jwt_auth.filters;
 
+import com.jwt_auth.exceptions.InvalidTokenException;
 import com.jwt_auth.services.JWTService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -49,7 +50,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (userEmail != null && authentication == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-
+                //validate the token
+                jwtService.validateToken(jwt, userDetails);
                 if (jwtService.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
@@ -59,7 +61,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             filterChain.doFilter(request, response);
-        } catch (Exception exception) {
+        } catch (InvalidTokenException ex) {
+            handlerExceptionResolver.resolveException(request, response, null, new InvalidTokenException("Authorization failed"));
+        }
+        catch (Exception exception) {
             handlerExceptionResolver.resolveException(request, response, null, exception);
         }
     }
