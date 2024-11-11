@@ -1,5 +1,6 @@
 package com.jwt_auth.services;
 
+import com.jwt_auth.enums.Role;
 import com.jwt_auth.models.requests.LoginRequest;
 import com.jwt_auth.models.requests.SignupRequest;
 import com.jwt_auth.models.responses.ApiResponse;
@@ -24,13 +25,19 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JWTService jwtService;
 
-    public ApiResponse<Users> signup(SignupRequest request) {
+    public ApiResponse<?> signup(SignupRequest request) throws Exception {
         // Check if username or email already exists
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username already exists");
+            ApiResponse response = new ApiResponse();
+            response.setCode(400);
+            response.setMessage("This username is already occupied");
+            return response;
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            ApiResponse response = new ApiResponse();
+            response.setCode(400);
+            response.setMessage("This email is already present");
+            return response;
         }
 
         // Create new user
@@ -40,6 +47,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
+        user.setRole(Role.valueOf(request.getRole()));
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
 
@@ -49,7 +57,7 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        Users user = userRepository.findByUsername(request.getUsername())
+        Users user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {

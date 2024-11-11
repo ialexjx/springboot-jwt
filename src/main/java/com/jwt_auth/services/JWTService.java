@@ -1,10 +1,13 @@
 package com.jwt_auth.services;
 
+import com.jwt_auth.models.tables.UserTokens;
+import com.jwt_auth.repositories.UserTokensRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -12,6 +15,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 @Service
@@ -22,6 +26,9 @@ public class JWTService {
 
     @Value("${security.jwt.expiration-time}")
     private long jwtExpiration;
+
+    @Autowired
+    UserTokensRepository userTokensRepository;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -59,10 +66,10 @@ public class JWTService {
                 .compact();
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
-    }
+//    public boolean isTokenValid(String token, UserDetails userDetails) {
+//        final String username = extractUsername(token);
+//        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+//    }
 
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
@@ -79,6 +86,20 @@ public class JWTService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public void revokeToken(String token) {
+        Optional<UserTokens> userToken = userTokensRepository.findByToken(token);
+        userToken.ifPresent(t -> {
+            t.revokeToken();
+            userTokensRepository.save(t);
+        });
+    }
+
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        Optional<UserTokens> userToken = userTokensRepository.findByToken(token);
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token) && userToken.isPresent() && !userToken.get().getIsRevoked();
     }
 
     private Key getSignInKey() {

@@ -26,4 +26,8 @@ public class UserTokens {
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
     private Boolean isRevoked = false;
+
+    public void revokeToken() {
+        this.isRevoked = true;
+    }
 }
