@@ -1,41 +1,67 @@
 package com.jwt_auth.services;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import com.jwt_auth.models.tables.Users;
+import com.jwt_auth.repositories.UserTokensRepository;
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
-import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
+
+import java.time.Instant;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
+@Data
 public class JWTService {
 
-    @Value("${jwt.secret}")
+    @Value("${security.jwt.secret-key}")
     private String secretKey;
 
-    @Value("${jwt.expiration}")
+    @Value("${security.jwt.expiration-time}")
     private long jwtExpiration;
 
-    public String generateToken(String username) {
-        Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, username);
+    @Autowired
+    UserTokensRepository userTokensRepository;
+
+    @Autowired
+    JwtEncoder encoder;
+
+    @Autowired
+    JwtDecoder decoder;
+
+    public static final String CLAIM_SCOPE = "scope";
+    public static final String EMAIL = "email";
+    public static final int SECONDS_IN_AN_HOUR = 60 * 60;
+
+    public Map<String, Object> extractAllClaims(String token) {
+        return decoder.decode(token).getClaims();
     }
 
-    private String createToken(Map<String, Object> claims, String username) {
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(username)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .signWith(getSignKey(), SignatureAlgorithm.HS256)
-                .compact();
+    public String generateToken(Users user) {
+
+        String scope = user.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(""));
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer("self")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(SECONDS_IN_AN_HOUR))
+                .subject(user.getUsername())
+                .claim(CLAIM_SCOPE, scope)
+                .claim(EMAIL, user.getEmail())
+                .build();
+
+        return this.encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
 
-    private Key getSignKey() {
-        byte[] keyBytes = secretKey.getBytes();
-        return Keys.hmacShaKeyFor(keyBytes);
+    public long getExpirationTime() {
+        return SECONDS_IN_AN_HOUR;
     }
 }
